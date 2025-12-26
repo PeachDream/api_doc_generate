@@ -176,7 +176,11 @@ public class ApiDocSettingsDialog extends DialogWrapper {
     protected @Nullable JComponent createCenterPanel() {
         // 主面板 - 自适应主题
         JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
-        mainPanel.setPreferredSize(new Dimension(650, 600));
+        // 使用屏幕相对尺寸，宽度为屏幕的40%，高度为屏幕的60%，限制最大最小值
+        java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int dialogWidth = Math.min(Math.max((int) (screenSize.width * 0.4), 550), 800);
+        int dialogHeight = Math.min(Math.max((int) (screenSize.height * 0.6), 500), 750);
+        mainPanel.setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         mainPanel.setBackground(bgColor);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 

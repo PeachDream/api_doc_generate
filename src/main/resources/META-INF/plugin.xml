@@ -29,6 +29,9 @@
         <applicationService serviceImplementation="com.demojava01.ApiDocSettings"/>
         <codeInsight.lineMarkerProvider language="JAVA"
                                         implementationClass="com.demojava01.ApiDocLineMarkerProvider"/>
+        <!-- 注册通知组（用于复制/导出成功的非模态提示） -->
+        <notificationGroup id="ApiDoc Notifications"
+                           displayType="BALLOON"/>
     </extensions>
 
     <actions>

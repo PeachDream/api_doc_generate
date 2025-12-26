@@ -618,7 +618,7 @@ public class ApiDocGenerator {
 
         for (int i = 0; i < currentLevelFields.size(); i++) {
             FieldInfo field = currentLevelFields.get(i);
-            String value = getDefaultValue(field.type);
+            String value = getJsonValueWithComment(field);
 
             // 检查是否有子字段
             List<FieldInfo> childFields = getChildFieldsFromAll(fields, field);
@@ -637,7 +637,7 @@ public class ApiDocGenerator {
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ");
                 sb.append(generateJsonFromChildFieldsRecursive(fields, childFields, depth + 1));
             } else {
-                // 基本类型
+                // 基本类型，添加注释
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ").append(value);
             }
 
@@ -672,7 +672,7 @@ public class ApiDocGenerator {
 
         for (int i = 0; i < childFields.size(); i++) {
             FieldInfo field = childFields.get(i);
-            String value = getDefaultValue(field.type);
+            String value = getJsonValueWithComment(field);
 
             // 检查是否有更深层的子字段
             List<FieldInfo> nestedFields = getChildFieldsFromAll(allFields, field);
@@ -691,7 +691,7 @@ public class ApiDocGenerator {
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ");
                 sb.append(generateJsonFromChildFieldsRecursive(allFields, nestedFields, depth + 1));
             } else {
-                // 基本类型
+                // 基本类型，添加注释
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ").append(value);
             }
 
@@ -751,6 +751,27 @@ public class ApiDocGenerator {
      */
     private String getDefaultValue(String type) {
         return PRIMITIVE_DEFAULT_VALUE_MAP.getOrDefault(type, "0");
+    }
+
+    /**
+     * 获取带注释的JSON值
+     * 格式为: "类型 //描述"
+     *
+     * @param field 字段信息
+     * @return 带注释的JSON值字符串
+     * @author peach
+     * @since 2025/12/26 | V3.1.5
+     */
+    private String getJsonValueWithComment(FieldInfo field) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\"").append(field.type).append("\"");
+
+        // 如果有描述，添加注释
+        if (field.description != null && !field.description.trim().isEmpty()) {
+            sb.append(" //").append(field.description.trim());
+        }
+
+        return sb.toString();
     }
 
     /**

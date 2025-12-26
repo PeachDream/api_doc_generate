@@ -1492,14 +1492,15 @@ public class ApiDocPreviewDialog extends DialogWrapper {
                 "        }\n" +
                 "        \n" +
                 "        th {\n" +
-                "            background: " + primaryColor + ";\n" +
-                "            color: white;\n" +
+                "            background: transparent;\n" +
+                "            color: " + textColor + ";\n" +
                 "            padding: " + cellPadding + ";\n" +
                 "            text-align: left;\n" +
-                "            font-weight: 500;\n" +
+                "            font-weight: 600;\n" +
                 "            font-size: 13px;\n" +
                 "            word-break: break-word;\n" +
                 "            overflow-wrap: anywhere;\n" +
+                "            border-bottom: 2px solid " + primaryColor + "50;\n" +
                 "        }\n" +
                 "        \n" +
                 "        td {\n" +
