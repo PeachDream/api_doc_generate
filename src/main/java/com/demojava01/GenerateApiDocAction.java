@@ -799,4 +799,74 @@ public class GenerateApiDocAction extends AnAction {
             LOG.warn("[ApiDoc] 配置验证失败: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * 静态方法：生成Controller的接口文档列表
+     * 供 ApiDocLineMarkerProvider 在图标点击时调用
+     *
+     * @param project  项目
+     * @param psiClass Controller类
+     * @param psiFile  包含该类的文件
+     * @author peach
+     * @since 2025/12/26 | V1.0.0
+     */
+    public static void generateControllerDoc(Project project, PsiClass psiClass, PsiFile psiFile) {
+        if (project == null || psiClass == null) {
+            return;
+        }
+
+        GenerateApiDocAction action = new GenerateApiDocAction();
+
+        // 生成文档前验证并清理过期的配置
+        action.validateConfigBeforeGenerate(project);
+
+        // 获取应用名称
+        String applicationName = action.getApplicationName(project, psiFile);
+
+        // 生成接口列表
+        java.util.List<ApiInfo> apiList = action.generateApiList(psiClass, applicationName, psiFile);
+        if (apiList.isEmpty()) {
+            Messages.showInfoMessage("该Controller没有找到HTTP接口方法", "提示");
+            return;
+        }
+
+        // 获取Controller名称
+        String controllerName = action.getControllerName(psiClass);
+
+        // 显示Controller模式的预览对话框
+        ApiDocPreviewDialog dialog = new ApiDocPreviewDialog(project, apiList, controllerName);
+        dialog.showAndGet();
+    }
+
+    /**
+     * 静态方法：生成单个方法的接口文档
+     * 供 ApiDocLineMarkerProvider 在图标点击时调用
+     *
+     * @param project  项目
+     * @param psiClass 方法所在的Controller类
+     * @param method   目标方法
+     * @param psiFile  包含该类的文件
+     * @author peach
+     * @since 2025/12/26 | V1.0.0
+     */
+    public static void generateMethodDoc(Project project, PsiClass psiClass, PsiMethod method, PsiFile psiFile) {
+        if (project == null || psiClass == null || method == null) {
+            return;
+        }
+
+        GenerateApiDocAction action = new GenerateApiDocAction();
+
+        // 生成文档前验证并清理过期的配置
+        action.validateConfigBeforeGenerate(project);
+
+        // 获取应用名称
+        String applicationName = action.getApplicationName(project, psiFile);
+
+        // 生成单个方法的文档
+        String markdown = action.generateMethodDoc(psiClass, method, applicationName, psiFile);
+
+        // 显示单方法模式的预览对话框
+        ApiDocPreviewDialog dialog = new ApiDocPreviewDialog(project, markdown);
+        dialog.showAndGet();
+    }
 }

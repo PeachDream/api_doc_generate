@@ -3,24 +3,26 @@ package com.demojava01;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 /**
  * API文档行标记提供者
  * 在Controller类和方法的左侧显示图标，点击可生成接口文档
+ * 类图标点击打开整个Controller的接口列表界面
+ * 方法图标点击打开单个方法的文档界面
  *
  * @author peach
  * @since 2025/12/26 | V1.0.0
@@ -43,14 +45,16 @@ public class ApiDocLineMarkerProvider implements LineMarkerProvider {
         }
 
         PsiElement parent = element.getParent();
+        // 类图标：点击打开整个Controller的接口列表
         if (parent instanceof PsiClass) {
             PsiClass psiClass = (PsiClass) parent;
             if (!isControllerClass(psiClass)) {
                 return null;
             }
-            return createLineMarkerInfo(element);
+            return createClassLineMarkerInfo(element, psiClass);
         }
 
+        // 方法图标：点击打开单个方法的文档
         if (parent instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) parent;
             PsiClass containingClass = method.getContainingClass();
@@ -60,35 +64,75 @@ public class ApiDocLineMarkerProvider implements LineMarkerProvider {
             if (!hasRequestMappingAnnotation(method)) {
                 return null;
             }
-            return createLineMarkerInfo(element);
+            return createMethodLineMarkerInfo(element, method, containingClass);
         }
 
         return null;
     }
 
     /**
-     * 创建行标记信息
+     * 创建类级别的行标记信息
+     * 点击后打开整个Controller的接口列表界面
      *
-     * @param element PSI元素
+     * @param element  PSI标识符元素
+     * @param psiClass Controller类
      * @return 行标记信息
      * @author peach
      * @since 2025/12/26 | V1.0.0
      */
-    private LineMarkerInfo<PsiElement> createLineMarkerInfo(PsiElement element) {
+    private LineMarkerInfo<PsiElement> createClassLineMarkerInfo(PsiElement element, PsiClass psiClass) {
         GutterIconNavigationHandler<PsiElement> handler = (MouseEvent e, PsiElement elt) -> {
-            AnAction action = ActionManager.getInstance().getAction("com.demojava01.GenerateApiDocAction");
-            if (action == null) {
-                return;
-            }
-            Component component = e.getComponent();
-            ActionManager.getInstance().tryToExecute(action, e, component, "ApiDocGutter", true);
+            // 获取项目和文件信息
+            Project project = psiClass.getProject();
+            PsiFile psiFile = psiClass.getContainingFile();
+
+            // 使用 ApplicationManager 确保在正确的上下文中执行
+            ApplicationManager.getApplication().invokeLater(() -> {
+                // 调用 GenerateApiDocAction 的静态方法生成Controller文档
+                GenerateApiDocAction.generateControllerDoc(project, psiClass, psiFile);
+            });
         };
 
         return new LineMarkerInfo<>(
                 element,
                 element.getTextRange(),
                 GUTTER_ICON,
-                psi -> "生成接口文档",
+                psi -> "生成Controller接口文档（全部接口）",
+                handler,
+                com.intellij.openapi.editor.markup.GutterIconRenderer.Alignment.LEFT,
+                () -> "生成Controller接口文档");
+    }
+
+    /**
+     * 创建方法级别的行标记信息
+     * 点击后打开单个方法的文档界面
+     *
+     * @param element         PSI标识符元素
+     * @param method          方法
+     * @param containingClass 方法所在的Controller类
+     * @return 行标记信息
+     * @author peach
+     * @since 2025/12/26 | V1.0.0
+     */
+    private LineMarkerInfo<PsiElement> createMethodLineMarkerInfo(PsiElement element, PsiMethod method,
+            PsiClass containingClass) {
+        GutterIconNavigationHandler<PsiElement> handler = (MouseEvent e, PsiElement elt) -> {
+            // 获取项目和文件信息
+            Project project = containingClass.getProject();
+            PsiFile psiFile = containingClass.getContainingFile();
+
+            // 使用 ApplicationManager 确保在正确的上下文中执行
+            ApplicationManager.getApplication().invokeLater(() -> {
+                // 调用 GenerateApiDocAction 的静态方法生成单方法文档
+                GenerateApiDocAction.generateMethodDoc(project, containingClass, method, psiFile);
+            });
+        };
+
+        return new LineMarkerInfo<>(
+                element,
+                element.getTextRange(),
+                GUTTER_ICON,
+                psi -> "生成接口文档（单个接口）",
                 handler,
                 com.intellij.openapi.editor.markup.GutterIconRenderer.Alignment.LEFT,
                 () -> "生成接口文档");
