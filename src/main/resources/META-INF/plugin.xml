@@ -8,13 +8,31 @@
     <name>ApiDocGenerate</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+    <vendor email="275092531peach@gmail.com" url="https://github.com/PeachDream">PeachDream</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
     <description><![CDATA[
-        Enter short description for your plugin here.<br>
-        <em>most HTML tags may be used</em>
+        <h2>API Doc Generate - Spring MVC API Documentation Generator</h2>
+        <p>A powerful IntelliJ IDEA plugin designed for Spring MVC projects that automatically generates Markdown-formatted API documentation.</p>
+        <br/>
+        <h3>Key Features:</h3>
+        <ul>
+            <li><b>One-Click Generation</b> - Right-click on a Controller class or method to quickly generate API documentation</li>
+            <li><b>Markdown Format</b> - Generates standard Markdown format for easy integration with various documentation platforms</li>
+            <li><b>JSON Examples</b> - Automatically generates request and response JSON examples with field comments</li>
+            <li><b>Git Integration</b> - Automatically retrieves the current Git branch name</li>
+            <li><b>Live Preview</b> - Real-time Markdown preview with light and dark themes</li>
+            <li><b>Flexible Export</b> - Copy to clipboard or export to file</li>
+            <li><b>Field Exclusion</b> - Configurable exclusion of specific classes or fields</li>
+        </ul>
+        <br/>
+        <h3>Usage:</h3>
+        <ol>
+            <li>Right-click on a Controller class or method and select "Generate API Doc"</li>
+            <li>Or use the shortcut Alt+Home</li>
+            <li>View, edit, and export documentation in the preview window</li>
+        </ol>
     ]]></description>
 
     <!-- Product and plugin compatibility requirements.
