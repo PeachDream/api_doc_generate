@@ -1,1 +1,1 @@
-rootProject.name = "demo01"
+rootProject.name = "ApiDocGenerate"

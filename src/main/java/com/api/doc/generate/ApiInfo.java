@@ -1,4 +1,4 @@
-package com.demojava01;
+package com.api.doc.generate;
 
 /**
  * 接口信息数据类

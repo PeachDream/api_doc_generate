@@ -1,4 +1,4 @@
-package com.demojava01;
+package com.api.doc.generate;
 
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;

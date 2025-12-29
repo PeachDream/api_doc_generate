@@ -1,4 +1,4 @@
-package com.demojava01;
+package com.api.doc.generate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;

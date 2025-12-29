@@ -1,11 +1,11 @@
 <!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
-    <id>com.example.demo01</id>
+    <id>com.api.doc.generate</id>
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
-    <name>Demo01</name>
+    <name>ApiDocGenerate</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor url="https://www.yourcompany.com">YourCompany</vendor>
@@ -26,9 +26,9 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <!-- 注册配置服务 -->
-        <applicationService serviceImplementation="com.demojava01.ApiDocSettings"/>
+        <applicationService serviceImplementation="com.api.doc.generate.ApiDocSettings"/>
         <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="com.demojava01.ApiDocLineMarkerProvider"/>
+                                        implementationClass="com.api.doc.generate.ApiDocLineMarkerProvider"/>
         <!-- 注册通知组（用于复制/导出成功的非模态提示） -->
         <notificationGroup id="ApiDoc Notifications"
                            displayType="BALLOON"/>
@@ -36,8 +36,8 @@
 
     <actions>
         <!-- 生成接口文档Action -->
-        <action id="com.demojava01.GenerateApiDocAction"
-                class="com.demojava01.GenerateApiDocAction"
+        <action id="com.api.doc.generate.GenerateApiDocAction"
+                class="com.api.doc.generate.GenerateApiDocAction"
                 text="生成接口文档"
                 description="为Spring MVC Controller方法生成Markdown格式的接口文档">
             <keyboard-shortcut keymap="$default" first-keystroke="alt HOME"/>

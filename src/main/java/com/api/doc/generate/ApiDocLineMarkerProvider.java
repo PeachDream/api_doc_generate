@@ -1,4 +1,4 @@
-package com.demojava01;
+package com.api.doc.generate;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
