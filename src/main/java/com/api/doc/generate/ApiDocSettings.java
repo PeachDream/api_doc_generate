@@ -38,10 +38,12 @@ public final class ApiDocSettings implements PersistentStateComponent<ApiDocSett
         public boolean useGitBranchAsVersion = true;
         /** 默认作者名 */
         public String defaultAuthor = "peach";
+        public String productVersion = "";
         /** 是否显示请求参数JSON */
         public boolean showRequestJson = true;
         /** 是否显示返回参数JSON */
         public boolean showResponseJson = true;
+        public boolean showResponseJsonComment = true;
         /** 排除的父类名称列表（多个类名用逗号分隔） */
         public String excludedParentClasses = "";
         /**
@@ -150,6 +152,24 @@ public final class ApiDocSettings implements PersistentStateComponent<ApiDocSett
     }
 
     /**
+     * Get product version.
+     *
+     * @return product version
+     */
+    public String getProductVersion() {
+        return myState.productVersion == null ? "" : myState.productVersion;
+    }
+
+    /**
+     * Set product version.
+     *
+     * @param productVersion product version
+     */
+    public void setProductVersion(String productVersion) {
+        myState.productVersion = productVersion;
+    }
+
+    /**
      * 是否显示请求参数JSON
      *
      * @return 是否显示
@@ -191,6 +211,24 @@ public final class ApiDocSettings implements PersistentStateComponent<ApiDocSett
      */
     public void setShowResponseJson(boolean show) {
         myState.showResponseJson = show;
+    }
+
+    /**
+     * Whether to show response JSON comments.
+     *
+     * @return true if enabled
+     */
+    public boolean isShowResponseJsonComment() {
+        return myState.showResponseJsonComment;
+    }
+
+    /**
+     * Set whether to show response JSON comments.
+     *
+     * @param show true to enable
+     */
+    public void setShowResponseJsonComment(boolean show) {
+        myState.showResponseJsonComment = show;
     }
 
     /**

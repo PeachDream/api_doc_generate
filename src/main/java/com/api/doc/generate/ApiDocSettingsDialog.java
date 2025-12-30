@@ -39,10 +39,12 @@ public class ApiDocSettingsDialog extends DialogWrapper {
     private JCheckBox useGitBranchCheckBox;
     /** 默认作者输入框 */
     private JTextField authorField;
+    private JTextField productVersionField;
     /** 显示请求JSON复选框 */
     private JCheckBox showRequestJsonCheckBox;
     /** 显示返回JSON复选框 */
     private JCheckBox showResponseJsonCheckBox;
+    private JCheckBox showResponseJsonCommentCheckBox;
     /** 排除父类列表模型 */
     private DefaultListModel<String> excludedClassesListModel;
     /** 排除父类列表 */
@@ -271,18 +273,21 @@ public class ApiDocSettingsDialog extends DialogWrapper {
         int row = 0;
 
         // 复选框设置组
-        JPanel checkboxPanel = new JPanel(new GridLayout(2, 2, 20, 10));
+        JPanel checkboxPanel = new JPanel(new GridLayout(0, 2, 20, 10));
         checkboxPanel.setBackground(cardBgColor);
 
         showCallLocationCheckBox = createStyledCheckBox("显示接口调用位置", settings.isShowCallLocation());
         useGitBranchCheckBox = createStyledCheckBox("使用Git分支作为版本号", settings.isUseGitBranchAsVersion());
         showRequestJsonCheckBox = createStyledCheckBox("显示请求参数JSON", settings.isShowRequestJson());
         showResponseJsonCheckBox = createStyledCheckBox("显示返回参数JSON", settings.isShowResponseJson());
+        showResponseJsonCommentCheckBox = createStyledCheckBox("显示返回JSON中文注释",
+                settings.isShowResponseJsonComment());
 
         checkboxPanel.add(showCallLocationCheckBox);
         checkboxPanel.add(useGitBranchCheckBox);
         checkboxPanel.add(showRequestJsonCheckBox);
         checkboxPanel.add(showResponseJsonCheckBox);
+        checkboxPanel.add(showResponseJsonCommentCheckBox);
 
         gbc.gridx = 0;
         gbc.gridy = row++;
@@ -313,6 +318,30 @@ public class ApiDocSettingsDialog extends DialogWrapper {
                 BorderFactory.createLineBorder(borderColor, 1),
                 BorderFactory.createEmptyBorder(6, 12, 6, 12)));
         settingsContent.add(authorField, gbc);
+
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(8, 0, 8, 15);
+        JLabel productVersionLabel = new JLabel("产品版本");
+        productVersionLabel.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
+        productVersionLabel.setForeground(textColor);
+        settingsContent.add(productVersionLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(8, 0, 8, 0);
+        productVersionField = new JTextField(settings.getProductVersion());
+        productVersionField.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
+        productVersionField.setPreferredSize(new Dimension(220, 34));
+        productVersionField.setBackground(inputBgColor);
+        productVersionField.setForeground(textColor);
+        productVersionField.setCaretColor(accentBlue);
+        productVersionField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor, 1),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)));
+        settingsContent.add(productVersionField, gbc);
 
         // 默认导出路径
         row++;
@@ -919,7 +948,11 @@ public class ApiDocSettingsDialog extends DialogWrapper {
         settings.setUseGitBranchAsVersion(useGitBranchCheckBox.isSelected());
         settings.setShowRequestJson(showRequestJsonCheckBox.isSelected());
         settings.setShowResponseJson(showResponseJsonCheckBox.isSelected());
+        settings.setShowResponseJsonComment(showResponseJsonCommentCheckBox.isSelected());
         settings.setDefaultAuthor(authorField.getText().trim());
+        if (productVersionField != null) {
+            settings.setProductVersion(productVersionField.getText().trim());
+        }
         if (exportPathField != null) {
             settings.setExportPath(exportPathField.getText().trim());
         }

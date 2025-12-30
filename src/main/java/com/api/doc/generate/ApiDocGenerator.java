@@ -251,7 +251,7 @@ public class ApiDocGenerator {
      */
     public String generateRequestParamsJson(PsiMethod method) {
         List<FieldInfo> fields = extractRequestParams(method);
-        return generateJsonFromFields(fields, 0);
+        return generateJsonFromFields(fields, 0, true);
     }
 
     /**
@@ -284,8 +284,21 @@ public class ApiDocGenerator {
      * @since 2025/12/25 | V1.0.0
      */
     public String generateResponseParamsJson(PsiMethod method) {
+        return generateResponseParamsJson(method, true);
+    }
+
+    /**
+     * 生成返回参数JSON格式
+     *
+     * @param method          方法
+     * @param includeComments 是否包含注释
+     * @return JSON字符串
+     * @author peach
+     * @since 2025/12/25 | V1.0.0
+     */
+    public String generateResponseParamsJson(PsiMethod method, boolean includeComments) {
         List<FieldInfo> fields = extractResponseParams(method);
-        return generateJsonFromFields(fields, 0);
+        return generateJsonFromFields(fields, 0, includeComments);
     }
 
     /**
@@ -599,7 +612,7 @@ public class ApiDocGenerator {
      * @author peach
      * @since 2025/12/25 | V1.0.0
      */
-    private String generateJsonFromFields(List<FieldInfo> fields, int depth) {
+    private String generateJsonFromFields(List<FieldInfo> fields, int depth, boolean includeComments) {
         StringBuilder sb = new StringBuilder();
         String indent = "   ".repeat(depth);
         String childIndent = "   ".repeat(depth + 1);
@@ -618,7 +631,7 @@ public class ApiDocGenerator {
 
         for (int i = 0; i < currentLevelFields.size(); i++) {
             FieldInfo field = currentLevelFields.get(i);
-            String value = getJsonValueWithComment(field);
+            String value = getJsonValueWithComment(field, includeComments);
 
             // 检查是否有子字段
             List<FieldInfo> childFields = getChildFieldsFromAll(fields, field);
@@ -627,7 +640,7 @@ public class ApiDocGenerator {
                 // 数组类型
                 if (!childFields.isEmpty()) {
                     sb.append(childIndent).append("\"").append(field.name).append("\" : [");
-                    sb.append(generateJsonFromChildFieldsRecursive(fields, childFields, depth + 1));
+                    sb.append(generateJsonFromChildFieldsRecursive(fields, childFields, depth + 1, includeComments));
                     sb.append("]");
                 } else {
                     sb.append(childIndent).append("\"").append(field.name).append("\" : []");
@@ -635,7 +648,7 @@ public class ApiDocGenerator {
             } else if (!childFields.isEmpty()) {
                 // 对象类型，使用递归方法处理嵌套
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ");
-                sb.append(generateJsonFromChildFieldsRecursive(fields, childFields, depth + 1));
+                sb.append(generateJsonFromChildFieldsRecursive(fields, childFields, depth + 1, includeComments));
             } else {
                 // 基本类型，添加注释
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ").append(value);
@@ -663,7 +676,7 @@ public class ApiDocGenerator {
      * @since 2025/12/25 | V1.0.0
      */
     private String generateJsonFromChildFieldsRecursive(List<FieldInfo> allFields, List<FieldInfo> childFields,
-            int depth) {
+            int depth, boolean includeComments) {
         StringBuilder sb = new StringBuilder();
         String indent = "   ".repeat(depth);
         String childIndent = "   ".repeat(depth + 1);
@@ -672,7 +685,7 @@ public class ApiDocGenerator {
 
         for (int i = 0; i < childFields.size(); i++) {
             FieldInfo field = childFields.get(i);
-            String value = getJsonValueWithComment(field);
+            String value = getJsonValueWithComment(field, includeComments);
 
             // 检查是否有更深层的子字段
             List<FieldInfo> nestedFields = getChildFieldsFromAll(allFields, field);
@@ -681,7 +694,7 @@ public class ApiDocGenerator {
                 // 数组类型
                 if (!nestedFields.isEmpty()) {
                     sb.append(childIndent).append("\"").append(field.name).append("\" : [");
-                    sb.append(generateJsonFromChildFieldsRecursive(allFields, nestedFields, depth + 1));
+                    sb.append(generateJsonFromChildFieldsRecursive(allFields, nestedFields, depth + 1, includeComments));
                     sb.append("]");
                 } else {
                     sb.append(childIndent).append("\"").append(field.name).append("\" : []");
@@ -689,7 +702,7 @@ public class ApiDocGenerator {
             } else if (!nestedFields.isEmpty()) {
                 // 对象类型，有嵌套子字段
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ");
-                sb.append(generateJsonFromChildFieldsRecursive(allFields, nestedFields, depth + 1));
+                sb.append(generateJsonFromChildFieldsRecursive(allFields, nestedFields, depth + 1, includeComments));
             } else {
                 // 基本类型，添加注释
                 sb.append(childIndent).append("\"").append(field.name).append("\" : ").append(value);
@@ -758,16 +771,17 @@ public class ApiDocGenerator {
      * 格式为: "类型 //描述"
      *
      * @param field 字段信息
-     * @return 带注释的JSON值字符串
+     * @param includeComments 是否包含注释
+     * @return JSON值字符串
      * @author peach
      * @since 2025/12/26 | V3.1.5
      */
-    private String getJsonValueWithComment(FieldInfo field) {
+    private String getJsonValueWithComment(FieldInfo field, boolean includeComments) {
         StringBuilder sb = new StringBuilder();
         sb.append("\"").append(field.type).append("\"");
 
         // 如果有描述，添加注释
-        if (field.description != null && !field.description.trim().isEmpty()) {
+        if (includeComments && field.description != null && !field.description.trim().isEmpty()) {
             sb.append(" //").append(field.description.trim());
         }
 

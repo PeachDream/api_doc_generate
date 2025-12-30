@@ -246,14 +246,26 @@ public class GenerateApiDocAction extends AnAction {
         String version = settings.isUseGitBranchAsVersion()
                 ? GitUtils.getCurrentBranchName(psiClass.getProject(), psiFile)
                 : "V1.0.0";
-        sb.append("|作者|创建时间|当时版本|\n");
-        sb.append("|:----:|:----:|:----:|\n");
-        sb.append("|").append(author).append("|").append(dateStr).append("|").append(version).append("|\n\n");
+        String productVersion = settings.getProductVersion();
+        String trimmedProductVersion = productVersion == null ? "" : productVersion.trim();
+        boolean hasProductVersion = !trimmedProductVersion.isEmpty();
+        if (hasProductVersion) {
+            sb.append("|作者|创建时间|当时版本|产品版本|\n");
+            sb.append("|:----:|:----:|:----:|:----:|\n");
+            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version)
+                    .append("|").append(trimmedProductVersion).append("|\n\n");
+        } else {
+            sb.append("|作者|创建时间|当时版本|\n");
+            sb.append("|:----:|:----:|:----:|\n");
+            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version).append("|\n\n");
+        }
 
         // 3. 接口调用位置（可配置是否显示）
         if (settings.isShowCallLocation()) {
+            String controllerName = getControllerName(psiClass);
+            String methodName = generator.getMethodTitle(method);
             sb.append("**接口调用位置：**\n");
-            sb.append("- 暂未提供自动检索，可手动补充\n\n");
+            sb.append("- ").append(controllerName).append(" -> ").append(methodName).append("\n\n");
         }
 
         // 4. 请求URL（包含应用名称）
@@ -296,7 +308,7 @@ public class GenerateApiDocAction extends AnAction {
         if (settings.isShowResponseJson()) {
             sb.append("### 返回参数Json格式\n \n");
             sb.append("```json\n");
-            sb.append(generator.generateResponseParamsJson(method));
+            sb.append(generator.generateResponseParamsJson(method, settings.isShowResponseJsonComment()));
             sb.append("\n```\n");
         }
 
