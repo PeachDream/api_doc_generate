@@ -36,6 +36,26 @@ public class GenerateApiDocAction extends AnAction {
     /** 向上搜索配置文件的最大目录层数，避免无限循环 */
     private static final int MAX_SEARCH_LEVEL = 20;
 
+    private static final class DocContext {
+        private final String dateStr;
+        private final String author;
+        private final String version;
+        private final String productVersion;
+        private final boolean hasProductVersion;
+        private final String controllerName;
+
+        private DocContext(String dateStr, String author, String version, String productVersion,
+                boolean hasProductVersion, String controllerName) {
+            this.dateStr = dateStr;
+            this.author = author;
+            this.version = version;
+            this.productVersion = productVersion;
+            this.hasProductVersion = hasProductVersion;
+            this.controllerName = controllerName;
+        }
+    }
+
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = e.getProject();
@@ -157,19 +177,37 @@ public class GenerateApiDocAction extends AnAction {
      * @author peach
      * @since 2025/12/25 | V1.0.0
      */
+    private DocContext buildDocContext(PsiClass psiClass, PsiFile psiFile, ApiDocSettings settings) {
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String author = settings.getDefaultAuthor();
+        String version = settings.isUseGitBranchAsVersion()
+                ? GitUtils.getCurrentBranchName(psiClass.getProject(), psiFile)
+                : "V1.0.0";
+        String productVersion = settings.getProductVersion();
+        String trimmedProductVersion = productVersion == null ? "" : productVersion.trim();
+        boolean hasProductVersion = !trimmedProductVersion.isEmpty();
+        String controllerName = getControllerName(psiClass);
+        return new DocContext(dateStr, author, version, trimmedProductVersion, hasProductVersion, controllerName);
+    }
+
     private String generateClassDoc(PsiClass psiClass, String applicationName, PsiFile psiFile) {
         StringBuilder sb = new StringBuilder();
         String classPath = getClassRequestPath(psiClass);
+        ApiDocGenerator generator = new ApiDocGenerator();
+        ApiDocSettings settings = ApiDocSettings.getInstance();
+        DocContext context = buildDocContext(psiClass, psiFile, settings);
 
         for (PsiMethod method : psiClass.getMethods()) {
             if (hasRequestMappingAnnotation(method)) {
-                sb.append(generateMethodDoc(psiClass, method, classPath, applicationName, psiFile));
+                sb.append(generateMethodDoc(psiClass, method, classPath, applicationName, psiFile,
+                        generator, settings, context, null));
                 sb.append("\n---\n\n");
             }
         }
 
         return sb.toString();
     }
+
 
     /**
      * 生成接口信息列表
@@ -186,20 +224,21 @@ public class GenerateApiDocAction extends AnAction {
         List<ApiInfo> apiList = new ArrayList<>();
         String classPath = getClassRequestPath(psiClass);
         ApiDocGenerator generator = new ApiDocGenerator();
+        ApiDocSettings settings = ApiDocSettings.getInstance();
+        DocContext context = buildDocContext(psiClass, psiFile, settings);
 
         for (PsiMethod method : psiClass.getMethods()) {
             if (hasRequestMappingAnnotation(method)) {
-                // 获取接口名称
                 String title = generator.getMethodTitle(method);
-                // 生成接口文档内容
-                String content = generateMethodDoc(psiClass, method, classPath, applicationName, psiFile);
-                // 添加到列表
+                String content = generateMethodDoc(psiClass, method, classPath, applicationName, psiFile,
+                        generator, settings, context, title);
                 apiList.add(new ApiInfo(title, content));
             }
         }
 
         return apiList;
     }
+
 
     /**
      * 生成单个方法的文档
@@ -231,53 +270,45 @@ public class GenerateApiDocAction extends AnAction {
      */
     private String generateMethodDoc(PsiClass psiClass, PsiMethod method, String classPath, String applicationName,
             PsiFile psiFile) {
-        StringBuilder sb = new StringBuilder();
         ApiDocGenerator generator = new ApiDocGenerator();
         ApiDocSettings settings = ApiDocSettings.getInstance();
+        DocContext context = buildDocContext(psiClass, psiFile, settings);
+        return generateMethodDoc(psiClass, method, classPath, applicationName, psiFile, generator, settings, context, null);
+    }
+    private String generateMethodDoc(PsiClass psiClass, PsiMethod method, String classPath, String applicationName,
+            PsiFile psiFile, ApiDocGenerator generator, ApiDocSettings settings, DocContext context, String title) {
+        StringBuilder sb = new StringBuilder();
+        ApiDocGenerator docGenerator = generator != null ? generator : new ApiDocGenerator();
+        ApiDocSettings docSettings = settings != null ? settings : ApiDocSettings.getInstance();
+        DocContext docContext = context != null ? context : buildDocContext(psiClass, psiFile, docSettings);
 
-        // 1. 标题 - 从方法注释或方法名获取
-        String title = generator.getMethodTitle(method);
-        sb.append("# ").append(title).append("\n\n");
+        // 1. ?? - ???????????
+        String methodTitle = title != null ? title : docGenerator.getMethodTitle(method);
+        sb.append("# ").append(methodTitle).append("\n\n");
 
-        // 2. 作者、创建时间、当时版本（Markdown表格格式）
-        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String author = settings.getDefaultAuthor();
-        // 传入psiFile以获取正确的Git分支
-        String version = settings.isUseGitBranchAsVersion()
-                ? GitUtils.getCurrentBranchName(psiClass.getProject(), psiFile)
-                : "V1.0.0";
-        String productVersion = settings.getProductVersion();
-        String trimmedProductVersion = productVersion == null ? "" : productVersion.trim();
-        boolean hasProductVersion = !trimmedProductVersion.isEmpty();
-        if (hasProductVersion) {
-            sb.append("|作者|创建时间|当时版本|产品版本|\n");
-            sb.append("|:----:|:----:|:----:|:----:|\n");
-            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version)
-                    .append("|").append(trimmedProductVersion).append("|\n\n");
-        } else {
-            sb.append("|作者|创建时间|当时版本|\n");
-            sb.append("|:----:|:----:|:----:|\n");
-            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version).append("|\n\n");
-        }
-
+        // 2. ?????????????Markdown?????
+        String dateStr = docContext.dateStr;
+        String author = docContext.author;
+        String version = docContext.version;
+        String trimmedProductVersion = docContext.productVersion;
+        boolean hasProductVersion = docContext.hasProductVersion;
         // 3. 接口调用位置（可配置是否显示）
-        if (settings.isShowCallLocation()) {
-            String controllerName = getControllerName(psiClass);
-            String methodName = generator.getMethodTitle(method);
+        if (docSettings.isShowCallLocation()) {
+            String controllerName = docContext.controllerName != null ? docContext.controllerName : getControllerName(psiClass);
             sb.append("**接口调用位置：**\n");
-            sb.append("- ").append(controllerName).append(" -> ").append(methodName).append("\n\n");
+            sb.append("- ").append(controllerName).append(" -> ").append(methodTitle).append("\n\n");
         }
 
         // 4. 请求URL（包含应用名称）
-        String methodPath = generator.getMethodRequestPath(method);
+        String methodPath = docGenerator.getMethodRequestPath(method);
         String apiPath = combinePath(classPath, methodPath);
         String fullPath = "/" + applicationName + apiPath;
         sb.append("**请求URL：** \n");
         sb.append("- `").append(fullPath).append("`\n\n");
 
         // 5. 请求方式
-        String httpMethod = generator.getHttpMethod(method);
-        String contentType = generator.getContentType(method);
+        String httpMethod = docGenerator.getHttpMethod(method);
+        String contentType = docGenerator.getContentType(method);
         sb.append("**请求方式：**\n");
         sb.append("- ").append(httpMethod).append("\n");
         sb.append("- ").append(contentType).append("\n\n");
@@ -286,14 +317,14 @@ public class GenerateApiDocAction extends AnAction {
         sb.append("### 请求参数<业务参数>\n \n");
         sb.append("|参数名|必选|类型|说明|\n");
         sb.append("|:----    |:---|:----- |-----   |\n");
-        sb.append(generator.generateRequestParamsTable(method));
+        sb.append(docGenerator.generateRequestParamsTable(method));
         sb.append("\n");
 
         // 7. 请求参数JSON格式（可配置）
-        if (settings.isShowRequestJson()) {
+        if (docSettings.isShowRequestJson()) {
             sb.append("### 请求参数Json格式\n \n");
             sb.append("```json\n");
-            sb.append(generator.generateRequestParamsJson(method));
+            sb.append(docGenerator.generateRequestParamsJson(method));
             sb.append("\n```\n\n");
         }
 
@@ -301,14 +332,14 @@ public class GenerateApiDocAction extends AnAction {
         sb.append("### 返回参数\n \n");
         sb.append("|参数名|必选|类型|说明|\n");
         sb.append("|:----    |:---|:----- |-----   |\n");
-        sb.append(generator.generateResponseParamsTable(method));
+        sb.append(docGenerator.generateResponseParamsTable(method));
         sb.append("\n");
 
         // 9. 返回参数JSON格式（可配置）
-        if (settings.isShowResponseJson()) {
+        if (docSettings.isShowResponseJson()) {
             sb.append("### 返回参数Json格式\n \n");
             sb.append("```json\n");
-            sb.append(generator.generateResponseParamsJson(method, settings.isShowResponseJsonComment()));
+            sb.append(docGenerator.generateResponseParamsJson(method, docSettings.isShowResponseJsonComment()));
             sb.append("\n```\n");
         }
 
@@ -756,31 +787,22 @@ public class GenerateApiDocAction extends AnAction {
             return "Controller";
         }
 
-        // 尝试从类注释中提取描述
         PsiDocComment docComment = psiClass.getDocComment();
         if (docComment != null) {
-            // 获取注释中的描述文本（第一行非空非标签文本）
-            for (PsiElement element : docComment.getDescriptionElements()) {
-                String text = element.getText().trim();
-                if (!text.isEmpty() && !text.startsWith("@")) {
-                    // 移除可能的换行符和多余空格
-                    text = text.replaceAll("[\\r\\n]+", " ").trim();
-                    if (!text.isEmpty()) {
-                        return text;
-                    }
-                }
+            String summary = DocCommentUtils.extractSummary(docComment);
+            if (!summary.isEmpty()) {
+                return summary;
             }
         }
 
-        // 如果没有注释，使用类名
         String className = psiClass.getName();
         if (className != null && className.endsWith("Controller")) {
-            // 移除 Controller 后缀
             return className.substring(0, className.length() - "Controller".length());
         }
 
         return className != null ? className : "Controller";
     }
+
 
     /**
      * 生成文档前验证并清理过期的配置

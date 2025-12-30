@@ -25,6 +25,10 @@ public class ApiDocGenerator {
      */
     private static final Map<String, String> PRIMITIVE_DEFAULT_VALUE_MAP = new HashMap<>();
 
+    private final Map<PsiMethod, String> methodTitleCache = new HashMap<>();
+    private final Map<PsiMethod, List<FieldInfo>> requestParamsCache = new HashMap<>();
+    private final Map<PsiMethod, List<FieldInfo>> responseParamsCache = new HashMap<>();
+
     /*
      * 静态初始化块
      * 初始化基本类型映射表和默认值映射表
@@ -84,25 +88,32 @@ public class ApiDocGenerator {
      * @since 2025/12/25 | V1.0.0
      */
     public String getMethodTitle(PsiMethod method) {
+        if (method == null) {
+            return "";
+        }
+
+        String cached = methodTitleCache.get(method);
+        if (cached != null) {
+            return cached;
+        }
+
+        String title = "";
         PsiDocComment docComment = method.getDocComment();
         if (docComment != null) {
-            PsiElement[] children = docComment.getDescriptionElements();
-            StringBuilder sb = new StringBuilder();
-            for (PsiElement child : children) {
-                String text = child.getText().trim();
-                if (!text.isEmpty()) {
-                    sb.append(text);
-                }
-            }
-            String description = sb.toString().trim();
-            if (!description.isEmpty()) {
-                // 取第一行作为标题
-                String[] lines = description.split("\n");
-                return lines[0].trim();
+            String summary = DocCommentUtils.extractSummary(docComment);
+            if (!summary.isEmpty()) {
+                title = summary;
             }
         }
-        return method.getName();
+
+        if (title.isEmpty()) {
+            title = method.getName();
+        }
+
+        methodTitleCache.put(method, title);
+        return title;
     }
+
 
     /**
      * 获取方法的请求路径
@@ -310,6 +321,15 @@ public class ApiDocGenerator {
      * @since 2025/12/25 | V1.0.0
      */
     private List<FieldInfo> extractRequestParams(PsiMethod method) {
+        if (method == null) {
+            return Collections.emptyList();
+        }
+
+        List<FieldInfo> cached = requestParamsCache.get(method);
+        if (cached != null) {
+            return cached;
+        }
+
         List<FieldInfo> fields = new ArrayList<>();
         PsiParameter[] parameters = method.getParameterList().getParameters();
         Map<String, String> paramDocs = getParamDocs(method);
@@ -372,6 +392,7 @@ public class ApiDocGenerator {
             }
         }
 
+        requestParamsCache.put(method, fields);
         return fields;
     }
 
@@ -384,16 +405,27 @@ public class ApiDocGenerator {
      * @since 2025/12/25 | V1.0.0
      */
     private List<FieldInfo> extractResponseParams(PsiMethod method) {
+        if (method == null) {
+            return Collections.emptyList();
+        }
+
+        List<FieldInfo> cached = responseParamsCache.get(method);
+        if (cached != null) {
+            return cached;
+        }
+
         List<FieldInfo> fields = new ArrayList<>();
         PsiType returnType = method.getReturnType();
 
         if (returnType == null || returnType.equalsToText("void")) {
+            responseParamsCache.put(method, fields);
             return fields;
         }
 
         // 处理返回类型，可能是 Result<Page<XXX>> 这样的嵌套泛型
         extractFieldsFromType(returnType, "", fields, new HashSet<>());
 
+        responseParamsCache.put(method, fields);
         return fields;
     }
 
