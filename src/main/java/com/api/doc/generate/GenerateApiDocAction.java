@@ -292,6 +292,16 @@ public class GenerateApiDocAction extends AnAction {
         String version = docContext.version;
         String trimmedProductVersion = docContext.productVersion;
         boolean hasProductVersion = docContext.hasProductVersion;
+        if (hasProductVersion) {
+            sb.append("|作者|创建时间|当前版本|产品版本|\n");
+            sb.append("|:----:|:----:|:----:|:----:|\n");
+            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version)
+                    .append("|").append(trimmedProductVersion).append("|\n\n");
+        } else {
+            sb.append("|作者|创建时间|当前版本|\n");
+            sb.append("|:----:|:----:|:----:|\n");
+            sb.append("|").append(author).append("|").append(dateStr).append("|").append(version).append("|\n\n");
+        }
         // 3. 接口调用位置（可配置是否显示）
         if (docSettings.isShowCallLocation()) {
             String controllerName = docContext.controllerName != null ? docContext.controllerName : getControllerName(psiClass);
